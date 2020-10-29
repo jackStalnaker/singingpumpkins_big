@@ -120,6 +120,18 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // LED strip
 CRGB leds[NUM_LED];
 
+// PA driven skull
+const int PA_SKULL = 45;
+const int PA_MIC = 49;
+const int micReadDelay = 25;
+const int servoMoveDelay = 50;
+Servo paSkullServo;
+const int paSkullMin = 0;
+const int paSkullMax = 40;
+int micVal = 0;
+unsigned long micReadTimer = 0;
+unsigned long servoMoveTimer = 0;
+
 // Misc
 int i = 0;                              // Loop counter
 int j = 0;                              // Loop counter
@@ -130,7 +142,7 @@ volatile unsigned long  timer_a = 0;    // Timer
 void setup()
 {
   // enable the watchdog timer with a time of 1 second. If the board freezes, it will reset itself after 1 second.
-  wdt_enable(WDTO_1S);
+  //wdt_enable(WDTO_1S);
 
   // specifically for the UNO
   sei();
@@ -190,16 +202,20 @@ void setup()
     leds[i] = CRGB(0, 0, 0);
   }
   FastLED.show();
-  
+
+  // Initialize PA skull
+  pinMode(PA_MIC, INPUT);
+  paSkullServo.attach(PA_SKULL);
+  paSkullServo.write(paSkullMin);
+
   test_sequence(); // brief test
   Serial.begin(COM_SPEED);   // set up input serial
 }
 
 void loop()
 {
-
   if (Serial.available() > 0) {
-    wdt_reset(); // resets the watchdog (prevents board lockup)
+    //wdt_reset(); // resets the watchdog (prevents board lockup)
     timer_a = millis ();  // Mark the time when a message was received
 
     // read the header to verify this is in fact a light sequence
@@ -210,6 +226,7 @@ void loop()
       }
     }
 
+    // Arduino servos
     for (i = 0; i < NUM_ARD_SERVOS; i++) {
       while (!Serial.available());
       incomingByte = Serial.read();
@@ -223,6 +240,7 @@ void loop()
       }
     }
 
+    // PCA9895 servos
     for (i = 0; i < NUM_PCA_SERVOS; i++) {
       while (!Serial.available());
       incomingByte = Serial.read();
@@ -238,12 +256,14 @@ void loop()
       }
     }
 
+    // PWM
     for (i = 0; i < NUM_PWM; i++) {
       while (!Serial.available());
       incomingByte = Serial.read();
       analogWrite(PWMChannels[i], incomingByte);
     }
 
+    // Inverted PWM
     for (i = 0; i < NUM_INV_PWM; i++) {
       while (!Serial.available());
       incomingByte = Serial.read();
@@ -254,6 +274,7 @@ void loop()
       }
     }
 
+    // Digital
     for (i = 0; i < NUM_DIGITAL; i++) {
       while (!Serial.available());
       incomingByte = Serial.read();
@@ -264,12 +285,14 @@ void loop()
       }
     }
 
+    // UART
     for (i = 0; i < NUM_UART; i++) {
       while (!Serial.available());
       incomingByte = Serial.read();
       Serial1.write(incomingByte);
     }
 
+    // LED strip
     for (i = 0; i < NUM_LED; i++) {
       while (!Serial.available());
       leds[i].r = Serial.read();
@@ -280,9 +303,11 @@ void loop()
     }
     FastLED.show();
 
+
+
   } else {
     // Random mode starts if no serial input has been received in TIME_OUT milliseconds
-    wdt_reset(); // resets the watchdog (prevents board lockup)
+    //wdt_reset(); // resets the watchdog (prevents board lockup)
     unsigned long diff = millis() - timer_a;
     if (diff >= TIME_OUT) {
       timer_a = millis ();
@@ -306,6 +331,19 @@ void loop()
         random_light(digitalChannels[i]);
       }
       random_strip();
+    }
+  }
+  
+  // PA skull
+  unsigned long now = millis();
+  if (((now - micReadTimer) > micReadDelay) &&
+      ((now - servoMoveTimer) > servoMoveDelay)) {
+    micVal = digitalRead(PA_MIC);
+    if (micVal) {
+      paSkullServo.write(paSkullMax);
+      servoMoveTimer = millis();
+    } else {
+      paSkullServo.write(paSkullMin);
     }
   }
 }
