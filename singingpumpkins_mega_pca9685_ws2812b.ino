@@ -27,6 +27,7 @@ const int PUMPKIN1_FANGS = 14;
 const int TRUMPET = 9;
 const int TRUMPET_ARM = 11;
 const int SKULL = 10;
+const int PA_SKULL = 8;
 
 // Channels mapped to Mega 2560 pin numbers
 const int PUMPKIN1_EYES_R  = 2;
@@ -226,7 +227,7 @@ void loop()
       }
     }
 
-    // Arduino servos
+    // Arduino servos (0, 0)
     for (i = 0; i < NUM_ARD_SERVOS; i++) {
       while (!Serial.available());
       incoming_byte = Serial.read();
@@ -240,7 +241,7 @@ void loop()
       }
     }
 
-    // PCA9895 servos
+    // PCA9895 servos (7, 7)
     for (i = 0; i < NUM_PCA_SERVOS; i++) {
       while (!Serial.available());
       incoming_byte = Serial.read();
@@ -256,14 +257,14 @@ void loop()
       }
     }
 
-    // PWM
+    // PWM (1, 8)
     for (i = 0; i < NUM_PWM; i++) {
       while (!Serial.available());
       incoming_byte = Serial.read();
       analogWrite(PWM_CHANNELS[i], incoming_byte);
     }
 
-    // Inverted PWM
+    // Inverted PWM (9, 17)
     for (i = 0; i < NUM_INV_PWM; i++) {
       while (!Serial.available());
       incoming_byte = Serial.read();
@@ -274,7 +275,7 @@ void loop()
       }
     }
 
-    // Digital
+    // Digital (2, 19)
     for (i = 0; i < NUM_DIGITAL; i++) {
       while (!Serial.available());
       incoming_byte = Serial.read();
@@ -285,14 +286,14 @@ void loop()
       }
     }
 
-    // UART
+    // UART (1, 20)
     for (i = 0; i < NUM_UART; i++) {
       while (!Serial.available());
       incoming_byte = Serial.read();
       Serial1.write(incoming_byte);
     }
 
-    // LED strip
+    // LED strip (53, 73)
     for (i = 0; i < NUM_LED; i++) {
       while (!Serial.available());
       leds[i].r = Serial.read();
